@@ -1,0 +1,28 @@
+# Normalise line endings so the repository is LF everywhere.
+# Without this, a Windows checkout rewrites every file to CRLF and the next
+# diff shows the whole file as changed.
+* text=auto eol=lf
+
+# Explicitly binary: never touch these.
+*.epub binary
+*.mobi binary
+*.azw3 binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Generated / vendored: exclude from diffs and from language stats.
+*.egg-info export-ignore
+tests/fixtures/*.epub binary
+examples/*.epub binary

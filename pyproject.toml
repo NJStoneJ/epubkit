@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "epubkit"
+version = "0.1.0"
+description = "Give an AI agent an addressable view of an EPUB: outline, search, read by anchor. Zero dependencies."
+readme = "README.md"
+# 3.10 is required for `@dataclass(slots=True)`, which is used for Block, Hit,
+# Chunk and friends. A large book holds hundreds of thousands of these, so the
+# per-instance dict that slots removes is worth more than 3.9 support.
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Stone" }]
+keywords = [
+    "epub",
+    "ebook",
+    "llm",
+    "ai-agent",
+    "mcp",
+    "model-context-protocol",
+    "rag",
+    "text-extraction",
+    "ebook-reader",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: XML",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# No runtime dependencies, on purpose. See README "Design decisions".
+dependencies = []
+
+[project.optional-dependencies]
+# Optional: replace the built-in CJK-aware estimator with a real tokenizer.
+tiktoken = ["tiktoken>=0.5"]
+dev = ["build", "twine"]
+
+[project.urls]
+Homepage = "https://github.com/NJStoneJ/epubkit"
+Repository = "https://github.com/NJStoneJ/epubkit"
+Issues = "https://github.com/NJStoneJ/epubkit/issues"
+Changelog = "https://github.com/NJStoneJ/epubkit/releases"
+
+[project.scripts]
+epubkit = "epubkit.cli:main"
+epubkit-mcp = "epubkit.mcp_server:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+epubkit = ["py.typed"]
