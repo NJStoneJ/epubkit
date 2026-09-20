@@ -15,7 +15,12 @@ is what proves the metadata is well-formed, and it does work locally:
 Note the venv goes *inside* the workspace. Creating one outside it gets the
 process killed on this machine.
 
-    python tests/packaging_check.py
+    python tests/packaging_check.py                    # structural checks
+    python tests/packaging_check.py --require-install  # and demand a real install
+
+Without `--require-install` a missing install is reported as a note, because a
+fresh clone has nothing installed yet and that is not a packaging defect. With
+it, absence is an error -- use that form when you mean to verify a build.
 """
 
 import os
@@ -36,6 +41,10 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
 FAILURES = []
+
+# Set by --require-install. Without it, an absent install is a note: a fresh
+# clone has nothing installed and that says nothing about the packaging.
+REQUIRE_INSTALL = "--require-install" in sys.argv[1:]
 
 
 def check(label, condition, detail=""):
@@ -164,8 +173,8 @@ def main():
     check("extras declared", "tiktoken" in extras, list(extras))
 
     # The installed distribution, if this interpreter can see one. This is the
-    # only check here that reflects a real build, so say so when it is absent
-    # rather than quietly skipping.
+    # only part here that reflects a real build, so it is checked only when a
+    # real install is actually visible.
     #
     # Careful: `importlib.metadata` finds `*.egg-info` anywhere on `sys.path`,
     # and an editable install leaves `src/epubkit.egg-info` in the tree. This
@@ -173,6 +182,12 @@ def main():
     # in-tree egg-info and *shadows* a real install -- a check that passes
     # whether or not anything was installed. So enumerate every distribution
     # named epubkit and pick out the ones that are not in-tree.
+    #
+    # That leftover egg-info is also why "is a distribution visible at all?" is
+    # the wrong question: it answers yes on a fresh checkout of a working tree
+    # that was ever installed into, and no on a clean clone, with nothing about
+    # the packaging having changed. Only a non-in-tree distribution means a
+    # build actually happened.
     try:
         from importlib.metadata import distributions, entry_points, requires
         from importlib.metadata import version as installed_version
@@ -186,12 +201,14 @@ def main():
         real = sorted(origin for origin, is_tree in seen.items() if not is_tree)
         in_tree = sorted(origin for origin, is_tree in seen.items() if is_tree)
 
-        check("a distribution named epubkit exists", bool(seen),
-              "none on sys.path")
         for origin in in_tree:
             print("  note  in-tree egg-info at %s (not an install)" % origin)
         for origin in real:
             print("  note  real installed distribution at %s" % origin)
+
+        if not real and REQUIRE_INSTALL:
+            check("a distribution named epubkit is installed", False,
+                  "none visible; run `pip install -e .` first")
 
         if real:
             check("installed version matches pyproject",
@@ -205,9 +222,11 @@ def main():
             check("installed metadata declares no runtime dependencies",
                   runtime == [], runtime)
         else:
-            print("  note  no real install visible here -- run this script with")
-            print("        _build_venv/Scripts/python after `pip install -e .` for")
-            print("        a full verification.")
+            print("  note  no install visible in this interpreter, so the")
+            print("        installed-metadata checks were skipped. That is")
+            print("        expected in a fresh clone. To verify a real build,")
+            print("        run this with _build_venv/Scripts/python after")
+            print("        `pip install -e .`, or pass --require-install.")
     except Exception as exc:  # noqa: BLE001 - not installed in this interpreter
         print("  note  skipped the installed-metadata checks: %r" % (exc,))
 

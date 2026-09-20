@@ -246,9 +246,19 @@ _build_venv/Scripts/epubkit.exe --version
 _build_venv/Scripts/epubkit-mcp.exe --help
 ```
 
+On a fresh clone nothing is installed, so the packaging check reports the
+missing install as a note and still exits 0 — the structural checks are the
+ones that must hold unconditionally. Pass `--require-install` to make an
+absent install an error; that is the form to use when you mean to verify a
+build:
+
+```console
+_build_venv/Scripts/python tests/packaging_check.py --require-install
+```
+
 Both console scripts, the installed metadata, and the MCP handshake have been
-verified this way against the built wheel — `epubkit-mcp` driven over a real
-subprocess pipe passes every protocol invariant.
+verified this way against an editable install — `epubkit-mcp` driven over a
+real subprocess pipe passes every protocol invariant.
 
 The fixtures are generated, not committed as binaries, and each one exists because it broke something:
 
